@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:river_pod_learning/home_screen.dart';
@@ -19,16 +21,10 @@ import 'package:http/http.dart' as http;
 //   (ref) => UserNotifier(),
 // );
 /*Future Provider IT's use to get data from API*/
-final feacthUserProvider = FutureProvider<User>((ref) async {
-  const url = "https://jsonplaceholder.typicode.com/users/1";
 
-  final response = await http.get(Uri.parse(url));
-
-  if (response.statusCode == 200) {
-    return User.fromJson(response.body); // <-- return a User object
-  } else {
-    throw Exception("Failed to fetch user");
-  }
+final feacthUserProvider = FutureProvider((ref) {
+  final UserRepository = ref.watch(userRpositoryProvider);
+  return UserRepository.fetchUserData();
 });
 
 void main() {
@@ -41,5 +37,21 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(debugShowCheckedModeBanner: false, home: HomeScreen());
+  }
+}
+
+final userRpositoryProvider = Provider((ref) => UserRepository());
+
+class UserRepository {
+  Future<User> fetchUserData() async {
+    const url = "https://jsonplaceholder.typicode.com/users/1";
+
+    final response = await http.get(Uri.parse(url));
+
+    if (response.statusCode == 200) {
+      return User.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception("Failed to fetch user");
+    }
   }
 }
